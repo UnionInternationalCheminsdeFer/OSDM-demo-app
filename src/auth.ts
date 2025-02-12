@@ -13,7 +13,7 @@ export class AccessToken {
   }
 
   async get() {
-    if (!this.token || !this.tokenExpiration || this.tokenExpiration > Date.now()) {
+    if (!this.token || !this.tokenExpiration || this.tokenExpiration <= Date.now()) {
       await this.refresh()
     }
     return `${this.tokenType} ${this.token}`
