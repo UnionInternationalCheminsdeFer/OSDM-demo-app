@@ -13,6 +13,8 @@ export default {
         'osdm-bg-white': '#FFFFFF',
         'osdm-text': '#000000',
         'osdm-text-inverted': '#FFFFFF',
+        'osdm-warn': '#E4CC37',
+        'osdm-error': '#D74E09',
       },
     },
   },
