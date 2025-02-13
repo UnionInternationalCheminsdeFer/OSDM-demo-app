@@ -38,6 +38,10 @@ export const displayPrice = (
       }
       return p
     }, 0)
-  const priceInCurrency = (totalPrice / Math.pow(10, price.scale)).toFixed(price.scale)
+  
+  let priceInCurrency = totalPrice.toFixed(2)
+  if (price.scale) {
+    priceInCurrency = (totalPrice / Math.pow(10, price.scale)).toFixed(price.scale)
+  }
   return `${priceInCurrency}${getCurrencySymbol(price.currency)}`
 }

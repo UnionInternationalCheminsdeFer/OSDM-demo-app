@@ -7,7 +7,7 @@
           {{ description }}
         </p>
       </div>
-      <div class="flex justify-between w-full">
+      <div class="flex gap-2 justify-between w-full overflow-auto py-2">
         <sbb-chip size="s" color="Granite">
           <div class="flex items-center">
             <sbb-icon name="tickets-class-small"></sbb-icon>
