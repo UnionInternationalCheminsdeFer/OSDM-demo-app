@@ -42,7 +42,7 @@
       <div class="w-full flex justify-end gap-14 items-center">
         <span class="text-lg font-bold">{{
           displayPrice(
-            offer.offerSummary.minimalPrice,
+            extractPriceFromOffer(offer),
             addedAncillaries.map((aa) => aa.price),
           )
         }}</span>
@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
-import { displayPrice } from '@/helpers/price'
+import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 import type { components } from '@/schemas/schema'
 import { useOfferStore } from '@/stores/offers'
 import { SbbCardElement as SbbCard } from '@sbb-esta/lyne-elements/card'
@@ -76,7 +76,7 @@ export default {
     }
   },
   setup() {
-    return { displayPrice }
+    return { displayPrice, extractPriceFromOffer }
   },
   methods: {
     handleSelect() {
