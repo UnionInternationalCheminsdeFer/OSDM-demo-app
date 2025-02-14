@@ -35,7 +35,9 @@ export default {
     if (!this.$route.query.offerId) {
       this.$router.push({ name: 'offers', query: this.$route.query })
     } else {
-      this.$router.push({ name: 'ticket', query: { ...this.$route.query, bookingId: useBookingStore().booking?.id } })
+      this.$router.push({
+        name: 'details', query: this.$route.query
+      })
     }
   },
 }

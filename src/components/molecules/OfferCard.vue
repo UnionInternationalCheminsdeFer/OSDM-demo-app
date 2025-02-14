@@ -82,7 +82,7 @@ export default {
     handleSelect() {
       useOfferStore().setSelectOfferAndAncillaries(this.offer as components['schemas']['Offer'], this.addedAncillaries)
       this.$router.push({
-        name: 'details',
+        name: 'booking',
         query: {
           offerId: this.offer.offerId,
           ancillariesIds: this.addedAncillaries.map((aa) => aa.id),

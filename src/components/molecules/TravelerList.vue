@@ -35,10 +35,11 @@ export default {
   },
   methods: {
     handlePurchase() {
+      // ToDo: Check required data present and pushed to server here!
       this.$router.push({
-        name: 'booking',
+        name: 'ticket',
         query: {
-          offerId: useOfferStore().selectedOffer?.offerId,
+          bookingId: useBookingStore().booking?.id,
           ancilleryIds: JSON.stringify(useOfferStore().selectedAncilleries.map((sa) => sa.id)),
           ...this.$route.query
         },

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import type { components } from '@/schemas/schema'
 import { convertDateToOsdmDate } from '@/helpers/conversions';
 
+// ToDo: The passenger definition should be split from an anonymous passenger definition
 export const usePassengerStore = defineStore('passenger', {
   state: (): {
     passengers: components['schemas']['Passenger'][]
@@ -12,7 +13,7 @@ export const usePassengerStore = defineStore('passenger', {
     return {
     passengers: [
       {
-        id: 'passenger_01',
+        id: '',
         externalRef: 'passenger_01',
         dateOfBirth: convertDateToOsdmDate(dummyBirthdate),
         type: 'PERSON',

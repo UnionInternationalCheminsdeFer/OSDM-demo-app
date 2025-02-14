@@ -50,4 +50,23 @@ export class OSDMBooking {
       body: request,
     })
   }
+
+  updatePassengerInformation(
+    request: components['schemas']['Passenger'],
+    bookingId: string,
+    passengerId: string,
+  ) {
+    return this.client?.PATCH('/bookings/{bookingId}/passengers/{passengerId}', {
+      params: {
+        header: {
+          Requestor: this.requestor,
+        },
+        path: {
+          bookingId,
+          passengerId,
+        }
+      },
+      body: request,
+    })
+  }
 }
