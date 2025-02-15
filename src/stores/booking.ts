@@ -33,6 +33,7 @@ export const useBookingStore = defineStore('booking', {
       this.status = 'fullfilling'
       this.fulfillment = undefined
       this.error = undefined
+      this.loading = false
     },
     setFulfillment(fulfillment: components['schemas']['Fulfillment']) {
       this.fulfillment = fulfillment
@@ -42,6 +43,7 @@ export const useBookingStore = defineStore('booking', {
     },
     setLoading(value: boolean) {
       this.loading = value
+      this.error = undefined
       this.status = 'prebooking'
     },
     setError(error: BookingError) {

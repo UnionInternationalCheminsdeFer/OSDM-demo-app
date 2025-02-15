@@ -32,14 +32,14 @@ const router = createRouter({
       component: OffersView,
     },
     {
-      path: '/details',
-      name: 'details',
-      component: DetailsView,
-    },
-    {
       path: '/booking',
       name: 'booking',
       component: BookingView,
+    },
+    {
+      path: '/details',
+      name: 'details',
+      component: DetailsView,
     },
     {
       path: '/ticket',
@@ -50,6 +50,7 @@ const router = createRouter({
 })
 
 
+// ToDo: Move all async logic into views
 const handleTripCollection = async (to: RouteLocationNormalizedGeneric) => {
   if (to.query.o && to.query.d && to.query.t&& to.query.v && to.query.tr) {
     const OSDM = inject(osdmClientKey)
@@ -142,10 +143,10 @@ const handleOfferSearch = async (to: RouteLocationNormalizedGeneric) => {
 }
 
 const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
-  if (to.query.offerId && to.query.ancilleryIds) {
+  if (to.query.offerId) {
     const OSDM = inject(osdmClientKey)
     const passengers = usePassengerStore().passengers
-    const ancillaryIds = JSON.parse(to.query.ancilleryIds.toString());
+    const ancillaryIds = to.query.ancilleryIds ? JSON.parse(to.query.ancilleryIds.toString()) : [];
     const bookingRequest = {
       offers: [
         {
@@ -170,6 +171,7 @@ const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
 
     if (response?.data?.booking) {
       useBookingStore().setBooking(response.data.booking)
+      usePassengerStore().definePassengers(response.data.booking.passengers)
       return
     } else if (response?.data) {
       useBookingStore().setError(
@@ -187,6 +189,32 @@ const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
         'The Server returned an error',
         'sign-exclamation-point-medium',
       ),
+    )
+  } else {
+    // ToDo: Error handling + routing
+    // e.g. GoTo Search
+  }
+}
+
+const handleFulfillment = async (to: RouteLocationNormalizedGeneric) => {
+  if (to.query.bookingId) {
+    const OSDM = inject(osdmClientKey)
+
+    // Update passenger information
+    const passengers = usePassengerStore().passengers
+    await Promise.all(passengers.map((p) => {
+      if (to.query.bookingId) {
+        OSDM?.booking.updatePassengerInformation(
+          p,
+          p.id,
+          to.query.bookingId.toString()
+        )
+      }
+    }))
+
+    // Request booking fulfillment
+    await OSDM?.booking.fulfillBooking(
+      to.query.bookingId.toString()
     )
   } else {
     // ToDo: Error handling + routing
@@ -215,18 +243,10 @@ router.beforeResolve(async (to) => {
     await handleTripCollection(to)
   } else if (to.name == 'offers') {
     await handleOfferSearch(to)
-  } else if (to.name == 'booking') {
+  } else if (to.name == 'details') {
     await handleBooking(to)
   } else if (to.name == 'ticket') {
-    if (to.query.bookingId) {
-      const OSDM = inject(osdmClientKey)
-      await OSDM?.booking.fulfillBooking(
-        to.query.bookingId.toString()
-      )
-    } else {
-      // ToDo: Error handling + routing
-      // e.g. GoTo Search
-    }
+    await handleFulfillment(to)
   }
 })
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { components } from '@/schemas/schema'
-import { displayPrice } from '@/helpers/price'
+import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 
 export class OfferListError {
   title: string
@@ -58,7 +58,7 @@ export const useOfferStore = defineStore('offer', {
     totalPriceOfSelection(): string {
       if (this.selectedOffer && this.selectedOffer.offerSummary) {
         return displayPrice(
-          this.selectedOffer.offerSummary.minimalPrice,
+          extractPriceFromOffer(this.selectedOffer),
           this.selectedAncilleries.map((aa) => aa.price),
         )
       }

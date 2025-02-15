@@ -2,11 +2,8 @@
   <sbb-card>
     <div class="flex flex-col items-center">
       <div class="self-start mb-4">
-        <p
-          v-for="(description, index) in getOfferPartSummary(offer.admissionOfferParts)"
-          :key="`desc-offer-${offer.id}-${index}`"
-          class="text-lg font-bold"
-        >
+        <p v-for="(description, index) in getOfferPartSummary(offer.admissionOfferParts)"
+          :key="`desc-offer-${offer.id}-${index}`" class="text-lg font-bold">
           {{ description }}
         </p>
       </div>
@@ -31,11 +28,8 @@
         </sbb-chip>
       </div>
       <hr class="w-full my-4" v-if="addedAncillaries.length > 0" />
-      <div
-        v-for="ancillaryOffer in addedAncillaries"
-        :key="`desc-${ancillaryOffer.id}`"
-        class="flex justify-between w-full items-center"
-      >
+      <div v-for="ancillaryOffer in addedAncillaries" :key="`desc-${ancillaryOffer.id}`"
+        class="flex justify-between w-full items-center">
         +
         <span> {{ displayPrice(ancillaryOffer.price) }}</span>
         <p>{{ getOfferPartSummary([ancillaryOffer]).join(' ') }}</p>
@@ -44,7 +38,7 @@
       <div class="w-full flex justify-end gap-14 items-center">
         <span class="text-lg font-bold">{{
           displayPrice(
-            offer.offerSummary.minimalPrice,
+            extractPriceFromOffer(offer),
             addedAncillaries.map((aa) => aa.price),
           )
         }}</span>
@@ -54,7 +48,7 @@
 </template>
 
 <script lang="ts">
-import { displayPrice } from '@/helpers/price'
+import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 import type { components } from '@/schemas/schema'
 import { SbbCardElement as SbbCard } from '@sbb-esta/lyne-elements/card'
 import { SbbChipElement as SbbChip } from '@sbb-esta/lyne-elements/chip'
@@ -75,7 +69,7 @@ export default {
     },
   },
   setup() {
-    return { displayPrice }
+    return { displayPrice, extractPriceFromOffer }
   },
   methods: {
     getOfferPartSummary(offerParts: components['schemas']['AbstractOfferPart'][]) {

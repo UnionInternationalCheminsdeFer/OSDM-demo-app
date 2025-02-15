@@ -8,7 +8,7 @@
 <script lang="ts">
 import HeaderBar from '@/components/molecules/HeaderBar.vue'
 import TravelerList from '@/components/molecules/TravelerList.vue'
-import { useOfferStore } from '@/stores/offers';
+import { useBookingStore } from '@/stores/booking';
 
 export default {
   components: {
@@ -16,7 +16,7 @@ export default {
     TravelerList,
   },
   mounted() {
-    if (!useOfferStore().selectedOffer) {
+    if (!useBookingStore().booking) {
       this.$router.push({ name: 'offers', query: this.$route.query })
     }
   }

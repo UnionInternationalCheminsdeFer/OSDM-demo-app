@@ -1,8 +1,12 @@
 <template>
   <div class="flex-1 flex flex-col min-w-64">
+    <div v-if="isDifferentReferenceDay()" class="flex gap-4 p-1 px-2 rounded w-fit bg-osdm-warn my-4">
+      <sbb-icon name="circle-information-small"></sbb-icon>
+      <span>{{ formatStartDay() }}</span>
+    </div>
     <sbb-pearl-chain-time :legs="calculateSBBLegsFromTrip(trip as components['schemas']['Trip'])"
       :arrival-time="trip.endTime" :departure-time="trip.startTime"></sbb-pearl-chain-time>
-    <div>
+    <div class="flex justify-between">
       <span>{{
         trip.transfers == 0
           ? 'direct'
@@ -10,12 +14,13 @@
             ? `${trip.transfers} transfers`
             : `${trip.transfers} transfers`
       }}</span>
-      <span>{{}}</span>
+      <span class="text-osdm-error">{{ nextDayText(trip.endTime) }}</span>
     </div>
   </div>
 </template>
 
 <script lang="ts">
+import { useTripsStore, DateReferenceType } from '@/stores/trips'
 import type { components } from '@/schemas/schema'
 import type { PtRideLeg } from '@sbb-esta/lyne-elements-experimental/core/timetable.js'
 import { SbbPearlChainTimeElement as SbbPearlChainTime } from '@sbb-esta/lyne-elements-experimental/pearl-chain-time'
@@ -84,6 +89,50 @@ export default {
 
       return sbbLegs
     },
+    isDifferentReferenceDay() {
+      const tripStore = useTripsStore();
+      if (tripStore.search.dateReferenceType == DateReferenceType.DEPARTURE) {
+        return new Date(this.trip.startTime).getDate() !== tripStore.search.date.getDate()
+      } else {
+        return new Date(this.trip.endTime).getDate() !== tripStore.search.date.getDate()
+      }
+    },
+    nextDayText(dateString) {
+      const dateA = new Date(dateString)
+      dateA.setHours(0, 0, 0, 0)
+      const dateB = new Date(this.trip.startTime)
+      dateB.setHours(0, 0, 0, 0)
+      const dayOffset = Math.floor((dateA - dateB) / 1000 / 60 / 60 / 24)
+      if (dayOffset > 0) {
+        const arrivalDate = new Date(dateString).toLocaleDateString({
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+        return `+ ${dayOffset} (${arrivalDate})`
+      }
+    },
+    formatStartDay() {
+      const tripStore = useTripsStore();
+
+      if (tripStore.search.dateReferenceType == DateReferenceType.DEPARTURE) {
+        return `Departing on ${new Date(this.trip.startTime).toLocaleDateString({
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })}`
+      }
+      return `Arriving on ${new Date(this.trip.endTime).toLocaleDateString({
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}`
+
+
+    }
   },
 }
 </script>

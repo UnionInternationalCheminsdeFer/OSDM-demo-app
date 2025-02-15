@@ -7,7 +7,7 @@
           {{ description }}
         </p>
       </div>
-      <div class="flex justify-between w-full">
+      <div class="flex gap-2 justify-between w-full overflow-auto py-2">
         <sbb-chip size="s" color="Granite">
           <div class="flex items-center">
             <sbb-icon name="tickets-class-small"></sbb-icon>
@@ -42,7 +42,7 @@
       <div class="w-full flex justify-end gap-14 items-center">
         <span class="text-lg font-bold">{{
           displayPrice(
-            offer.offerSummary.minimalPrice,
+            extractPriceFromOffer(offer),
             addedAncillaries.map((aa) => aa.price),
           )
         }}</span>
@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
-import { displayPrice } from '@/helpers/price'
+import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 import type { components } from '@/schemas/schema'
 import { useOfferStore } from '@/stores/offers'
 import { SbbCardElement as SbbCard } from '@sbb-esta/lyne-elements/card'
@@ -76,13 +76,13 @@ export default {
     }
   },
   setup() {
-    return { displayPrice }
+    return { displayPrice, extractPriceFromOffer }
   },
   methods: {
     handleSelect() {
       useOfferStore().setSelectOfferAndAncillaries(this.offer as components['schemas']['Offer'], this.addedAncillaries)
       this.$router.push({
-        name: 'details',
+        name: 'booking',
         query: {
           offerId: this.offer.offerId,
           ancillariesIds: this.addedAncillaries.map((aa) => aa.id),
