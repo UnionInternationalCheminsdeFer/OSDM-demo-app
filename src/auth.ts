@@ -13,6 +13,9 @@ export class AccessToken {
   }
 
   async get() {
+    if (!useAuthStore().clientId && !useAuthStore().clientSecret) {
+      return;
+    }
     if (!this.token || !this.tokenExpiration || this.tokenExpiration <= Date.now()) {
       await this.refresh()
     }
@@ -51,10 +54,12 @@ export const AuthMiddleware: Middleware = {
 
     const accessToken = await useAuthStore().accessToken.get();
 
-    request.headers.set(
-        'Authorization',
-        accessToken
-    )
+    if (accessToken) {
+      request.headers.set(
+          'Authorization',
+          accessToken
+      )
+    }
 
     return request
   },
