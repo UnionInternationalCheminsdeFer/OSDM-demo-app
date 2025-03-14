@@ -91,20 +91,23 @@ export default {
     },
     isDifferentReferenceDay() {
       const tripStore = useTripsStore();
-      if (tripStore.search.dateReferenceType == DateReferenceType.DEPARTURE) {
-        return new Date(this.trip.startTime).getDate() !== tripStore.search.date.getDate()
-      } else {
-        return new Date(this.trip.endTime).getDate() !== tripStore.search.date.getDate()
+      if (tripStore.search) {
+        if (tripStore.search.dateReferenceType == DateReferenceType.DEPARTURE) {
+          return new Date(this.trip.startTime).getDate() !== tripStore.search.date.getDate()
+        } else {
+          return new Date(this.trip.endTime).getDate() !== tripStore.search.date.getDate()
+        }
       }
     },
-    nextDayText(dateString) {
+    nextDayText(dateString: string) {
       const dateA = new Date(dateString)
       dateA.setHours(0, 0, 0, 0)
       const dateB = new Date(this.trip.startTime)
       dateB.setHours(0, 0, 0, 0)
-      const dayOffset = Math.floor((dateA - dateB) / 1000 / 60 / 60 / 24)
+      const dayOffset = Math.floor((Number(dateA) - Number(dateB)) / 1000 / 60 / 60 / 24)
       if (dayOffset > 0) {
-        const arrivalDate = new Date(dateString).toLocaleDateString({
+        // See: https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleDateString
+        const arrivalDate = new Date(dateString).toLocaleDateString(undefined, {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
@@ -115,23 +118,22 @@ export default {
     },
     formatStartDay() {
       const tripStore = useTripsStore();
-
-      if (tripStore.search.dateReferenceType == DateReferenceType.DEPARTURE) {
-        return `Departing on ${new Date(this.trip.startTime).toLocaleDateString({
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })}`
+      if (tripStore.search) {
+        if (tripStore.search.dateReferenceType == DateReferenceType.DEPARTURE) {
+          return `Departing on ${new Date(this.trip.startTime).toLocaleDateString(undefined, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}`
+        }
       }
-      return `Arriving on ${new Date(this.trip.endTime).toLocaleDateString({
+      return `Arriving on ${new Date(this.trip.endTime).toLocaleDateString(undefined, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       })}`
-
-
     }
   },
 }
