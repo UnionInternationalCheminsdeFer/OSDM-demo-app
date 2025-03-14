@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'demo-app/**'
 
 jobs:
   lint-and-type-check:
