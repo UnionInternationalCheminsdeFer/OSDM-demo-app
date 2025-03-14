@@ -42,7 +42,7 @@
       <div class="w-full flex justify-end gap-14 items-center">
         <span class="text-lg font-bold">{{
           displayPrice(
-            extractPriceFromOffer(offer),
+            extractPriceFromOffer(offer as components['schemas']['Offer']),
             addedAncillaries.map((aa) => aa.price),
           )
         }}</span>
