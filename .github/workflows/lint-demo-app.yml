@@ -20,15 +20,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd ./demo-app
           npm install
 
       - name: Run lint
         run: |
-          cd ./demo-app
           npm run lint
 
       - name: Run type-check
         run: |
-          cd ./demo-app
           npm run type-check
