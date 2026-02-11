@@ -4,6 +4,7 @@ import TripsView from '@/views/TripsView.vue'
 import OffersView from '@/views/OffersView.vue'
 import DetailsView from '@/views/DetailsView.vue'
 import TicketView from '@/views/TicketView.vue'
+import RefundOffersView from '@/views/RefundOffersView.vue'
 import { usePassengerStore } from '@/stores/passengers'
 import { DateReferenceType, TripListError, useTripsStore, type SearchCriteriaLocation } from '@/stores/trips'
 import BookingView from '@/views/BookingView.vue'
@@ -35,6 +36,12 @@ const router = createRouter({
       path: '/booking',
       name: 'booking',
       component: BookingView,
+    },
+    {
+      path: '/refund-offers/:bookingId',
+      name: 'refund-offers',
+      component: RefundOffersView,
+      props: true,
     },
     {
       path: '/details',

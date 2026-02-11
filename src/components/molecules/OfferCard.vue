@@ -4,7 +4,7 @@
       <div class="self-start mb-4">
         <p v-for="(description, index) in getOfferPartSummary(offer.admissionOfferParts)"
           :key="`desc-offer-${offer.id}-${index}`" class="text-lg font-bold">
-          {{ description }}
+          {{ description }} {{ getAccommodationTypeText(offer) }}
         </p>
       </div>
       <div class="flex gap-2 justify-between w-full overflow-auto py-2">
@@ -79,6 +79,16 @@ export default {
     return { displayPrice, extractPriceFromOffer }
   },
   methods: {
+    getAccommodationTypeText(offer) {
+        const type = offer?.offerSummary?.overallAccommodationType
+        const subType = offer?.offerSummary?.overallAccommodationSubType
+
+        const text = [type, subType]
+              .filter(Boolean)
+              .join(' ')
+
+           return text ? `(${text})` : ''
+    },
     handleSelect() {
       useOfferStore().setSelectOfferAndAncillaries(this.offer as components['schemas']['Offer'], this.addedAncillaries)
       this.$router.push({

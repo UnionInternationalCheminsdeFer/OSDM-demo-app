@@ -69,4 +69,42 @@ export class OSDMBooking {
       body: request,
     })
   }
+
+  requestRefundOffers(
+    bookingId: string,
+    request: components['schemas']['RefundOfferRequest'],
+  ) {
+    return this.client?.POST('/bookings/{bookingId}/refund-offers', {
+      params: {
+        header: {
+          Requestor: this.requestor,
+          'Content-Type': 'application/json',
+        },
+        path: {
+          bookingId,
+        },
+      },
+      body: request,
+    })
+  }
+
+  confirmRefundOffer(
+    bookingId: string,
+    refundOfferId: string,
+    request: components['schemas']['RefundOfferPatchRequest'] | { status: 'CONFIRMED' },
+  ) {
+    return this.client?.PATCH('/bookings/{bookingId}/refund-offers/{refundOfferId}', {
+      params: {
+        header: {
+          Requestor: this.requestor,
+          'Content-Type': 'application/json',
+        },
+        path: {
+          bookingId,
+          refundOfferId,
+        },
+      },
+      body: request,
+    })
+  }
 }
