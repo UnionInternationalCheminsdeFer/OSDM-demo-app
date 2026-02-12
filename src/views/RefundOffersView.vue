@@ -115,7 +115,6 @@ export default {
       return v ? v.toString() : null
     },
     fulfillments(): any[] {
-    console.log(this.booking)
       return this.booking?.fulfillments ?? []
     },
   },
@@ -191,11 +190,9 @@ export default {
 
         this.confirmedRefundOfferId = refundOfferId
 
-        // opcional: if we want to refresh the booking/state:
-        // const b = await this.OSDM.booking.getBooking(this.bookingId)
-        // this.booking = b?.data?.booking ?? null
+        const b = await this.OSDM.booking.getBooking(this.bookingId)
+        this.booking = b?.data?.booking ?? null
       } catch (e) {
-        // useBookingStore().setError(new BookingError(...))
         console.error('Confirm refund offer failed', e)
       } finally {
         this.loading = false
