@@ -79,3 +79,34 @@ export const convertPassengerToAnonymousPassengerSpecification = (passenger: com
     type: passenger.type,
     dateOfBirth: passenger.dateOfBirth,
 });
+
+export const convertTripToTripSpecification = (
+    trip: components['schemas']['Trip'],
+): components['schemas']['TripSpecification'] => ({
+    externalRef: (trip.externalRef ?? trip.id) as string,
+    legs: (trip.legs ?? [])
+        .filter((l) => !!l?.timedLeg)
+        .map((l, idx) => ({
+            externalRef: (l.externalRef ?? String(idx)) as string,
+            timedLeg: {
+                start: {
+                    stopPlaceRef: l.timedLeg!.start.stopPlaceRef,
+                    serviceDeparture: {
+                        timetabledTime: l.timedLeg!.start.serviceDeparture.timetabledTime,
+                    },
+                },
+                end: {
+                    stopPlaceRef: l.timedLeg!.end.stopPlaceRef,
+                    serviceArrival: {
+                        timetabledTime: l.timedLeg!.end.serviceArrival.timetabledTime,
+                    },
+                },
+                service: {
+                    vehicleNumbers: l.timedLeg!.service?.vehicleNumbers ?? [],
+                    carriers: (l.timedLeg!.service?.carriers ?? []).map((c) => ({
+                        ref: c.ref,
+                    })),
+                },
+            },
+        })),
+});

@@ -111,18 +111,28 @@ const handleTripCollection = async (to: RouteLocationNormalizedGeneric) => {
 }
 
 const handleOfferSearch = async (to: RouteLocationNormalizedGeneric) => {
-  if (to.query.trip) {
+  if (to.query.trip || to.query.tripSpec) {
     const OSDM = inject(osdmClientKey)
-    const trip = JSON.parse(decodeURIComponent(atob(to.query.trip.toString())))
     const passengers = usePassengerStore().passengers
 
-    const request = {
-      anonymousPassengerSpecifications: passengers.map((p) => convertPassengerToAnonymousPassengerSpecification(p)),
-      tripIds: [trip.id],
-    };
+    const baseRequest: any = {
+      anonymousPassengerSpecifications: passengers.map((p) =>
+        convertPassengerToAnonymousPassengerSpecification(p),
+      ),
+    }
+
+    // TripSpecification
+    if (to.query.tripSpec) {
+      const tripSpec = JSON.parse(decodeURIComponent(atob(to.query.tripSpec.toString())))
+      baseRequest.tripSpecifications = [tripSpec]
+    } else {
+      // tripIds
+      const trip = JSON.parse(decodeURIComponent(atob(to.query.trip!.toString())))
+      baseRequest.tripIds = [trip.id]
+    }
 
     useOfferStore().setLoading(true)
-    const response = await OSDM?.offer.searchOffers(request)
+    const response = await OSDM?.offer.searchOffers(baseRequest)
     if (response?.data?.offers) {
       useOfferStore().setOffers(response.data.offers)
       return
