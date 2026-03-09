@@ -10,10 +10,17 @@
       <span>{{
         trip.transfers == 0
           ? 'direct'
-          : trip.transfers == 0
-            ? `${trip.transfers} transfers`
-            : `${trip.transfers} transfers`
-      }}</span>
+          : `${trip.transfers} transfers`
+      }} </span>
+      <span>
+        <template v-for="(leg, index) in trip.legs" :key="leg.id">
+          <span v-if="index != 0"> → </span>
+          {{ leg.timedLeg.service.vehicleNumbers[0] }}
+          <span v-if="index < trip.legs.length - 1">
+            → {{ leg.timedLeg.end.stopPlaceName }}
+          </span>
+        </template>
+      </span>
       <span class="text-osdm-error">{{ nextDayText(trip.endTime) }}</span>
     </div>
   </div>
