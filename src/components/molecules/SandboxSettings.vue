@@ -18,9 +18,9 @@
                         Connection details:
                     </h2>
                     <sbb-form-field error-space="none" size="m" class="md:w-96">
-                        <label>Server base URL</label>
+                        <label>Auth base URL</label>
                         <input placeholder="https://osdm-5.platform.bileto.zone/api/" name="message"
-                            v-model="serverURL" />
+                            v-model="authURL" />
                     </sbb-form-field>
                     <sbb-form-field error-space="none" size="m" class="md:w-96">
                         <label>Client Id</label>
@@ -30,6 +30,14 @@
                         <label>Client Secret</label>
                         <input type="password" placeholder="0000000000" v-model="clientSecret" name="message" />
                     </sbb-form-field>
+
+                    
+                    <sbb-form-field error-space="none" size="m" class="md:w-96">
+                        <label>Server base URL</label>
+                        <input placeholder="https://osdm-5.platform.bileto.zone/api/" name="message"
+                            v-model="serverURL" />
+                    </sbb-form-field>
+
                     <sbb-button type="submit" size="m" sbb-overlay-close="" @click="handleSubmit">
                         Set Auth details
                     </sbb-button>
@@ -55,6 +63,7 @@ export default {
             serverURL: '',
             clientId: '',
             clientSecret: '',
+            authURL: '',
         }
     },
     setup() {
@@ -68,6 +77,7 @@ export default {
             this.serverURL = useAuthStore().sandboxURL;
             this.clientId = useAuthStore().clientId;
             this.clientSecret = useAuthStore().clientSecret;
+            this.authURL = useAuthStore().authURL;
         }
     },
     methods: {
@@ -76,7 +86,7 @@ export default {
         },
         handleSubmit(event: Event) {
             event.preventDefault()
-            useAuthStore().setAccessDetails(this.serverURL, this.clientId, this.clientSecret);
+            useAuthStore().setAccessDetails(this.serverURL, this.clientId, this.clientSecret, this.authURL);
             this.OSDM?.setEndpoint(this.serverURL)
         }
     }
