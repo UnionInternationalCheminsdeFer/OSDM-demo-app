@@ -22,6 +22,7 @@ export default defineConfig(async () => {
   const version = await getVersionInfo();
 
   return {
+    base: './',
   plugins: [
     vue({
       template: {
