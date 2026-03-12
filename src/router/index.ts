@@ -15,7 +15,7 @@ import { OfferListError, useOfferStore } from '@/stores/offers'
 import { convertDateToOsdmDateTime, convertPassengerToAnonymousPassengerSpecification, convertPlaceToRef } from '@/helpers/conversions'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
