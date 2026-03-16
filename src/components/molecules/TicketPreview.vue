@@ -44,6 +44,14 @@
 
       </div>
     </sbb-card>
+    <RouterLink
+      :to="{
+        name: 'refund-offers',
+        params: { bookingId: booking.id }
+      }"
+    >
+      Request Refund
+    </RouterLink>
   </div>
 </template>
 
