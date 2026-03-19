@@ -2,6 +2,24 @@ import { defineStore } from 'pinia'
 import type { components } from '@/schemas/schema'
 import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 
+export interface SelectedPlace {
+  coachNumber: string
+  placeNumber: string
+  passengerRef: string
+}
+
+export interface SelectedReferencePlace {
+  coachNumber: string
+  placeNumber: string
+}
+
+export interface SelectedPlaceSelection {
+  reservationId: string
+  places?: SelectedPlace[]
+  passengerRefs?: string[]
+  referencePlace?: SelectedReferencePlace
+}
+
 export class OfferListError {
   title: string
   description: string
@@ -19,12 +37,14 @@ export const useOfferStore = defineStore('offer', {
     offers: components['schemas']['Offer'][]
     selectedOffer: components['schemas']['Offer'] | undefined
     selectedAncilleries: components['schemas']['AncillaryOfferPart'][]
+    selectedPlaceSelections: SelectedPlaceSelection[]
     error: OfferListError | undefined
     loading: boolean
   } => ({
     offers: [],
     selectedOffer: undefined,
     selectedAncilleries: [],
+    selectedPlaceSelections: [],
     loading: false,
     error: undefined,
   }),
@@ -43,10 +63,21 @@ export const useOfferStore = defineStore('offer', {
     ) {
       this.selectedOffer = offer
       this.selectedAncilleries = ancillaries
+      this.selectedPlaceSelections = []
+    },
+    setSelectOfferAncillariesAndPlaces(
+      offer: components['schemas']['Offer'],
+      ancillaries: components['schemas']['AncillaryOfferPart'][],
+      placeSelections: SelectedPlaceSelection[],
+    ) {
+      this.selectedOffer = offer
+      this.selectedAncilleries = ancillaries
+      this.selectedPlaceSelections = JSON.parse(JSON.stringify(placeSelections ?? []))
     },
     unselectOffer() {
       this.selectedOffer = undefined
       this.selectedAncilleries = []
+      this.selectedPlaceSelections = []
     },
     setError(error: OfferListError) {
       this.error = error
