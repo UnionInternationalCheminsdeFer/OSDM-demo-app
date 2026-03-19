@@ -163,19 +163,93 @@ const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
   if (to.query.offerId) {
     const OSDM = inject(osdmClientKey)
     const passengers = usePassengerStore().passengers
-    const ancillaryIds = to.query.ancilleryIds ? JSON.parse(to.query.ancilleryIds.toString()) : [];
+    const offerStore = useOfferStore()
+
+    const ancillaryIdsRaw = to.query.ancillariesIds ?? to.query.ancilleryIds
+    const ancillaryIds = ancillaryIdsRaw
+      ? JSON.parse(ancillaryIdsRaw.toString())
+      : offerStore.selectedAncilleries.map((ancillary) => ancillary.id)
+
+    const normalizePlaceSelections = (rawSelections: any[]): any[] => {
+      if (!Array.isArray(rawSelections)) {
+        return []
+      }
+
+      return rawSelections
+        .map((selection: any) => {
+          const reservationId = selection?.reservationId?.toString?.()
+          if (!reservationId) {
+            return null
+          }
+          if (selection?.referencePlace) {
+            const coachNumber = selection.referencePlace?.coachNumber?.toString?.().trim?.() ?? ''
+            const placeNumber = selection.referencePlace?.placeNumber?.toString?.().trim?.() ?? ''
+
+            if (!coachNumber || !placeNumber) {
+              return null
+            }
+
+            return {
+              reservationId,
+              tripLegCoverage: {tripId:'1',legId:'1'},
+              referencePlace: {
+                coachNumber,
+                placeNumber,
+              },
+            }
+          }
+
+          const places = Array.isArray(selection?.places)
+            ? selection.places
+                .map((place: any) => {
+                  const coachNumber = place?.coachNumber?.toString?.().trim?.() ?? ''
+                  const placeNumber = place?.placeNumber?.toString?.().trim?.() ?? ''
+                  const passengerRef = place?.passengerRef?.toString?.()
+                  if (!coachNumber || !placeNumber || !passengerRef) {
+                    return null
+                  }
+                  return {
+                    coachNumber,
+                    placeNumber,
+                    passengerRef,
+                  }
+                })
+                .filter((place: any) => !!place)
+            : []
+
+          if (places.length === 0) {
+            return null
+          }
+
+          return {
+            reservationId,
+            tripLegCoverage: {tripId:'1',legId:'1'},
+            places,
+          }
+        })
+        .filter((selection: any) => !!selection)
+    }
+    const storePlaceSelections = normalizePlaceSelections(offerStore.selectedPlaceSelections as any[])
+    const queryPlaceSelections = to.query.placeSelections
+      ? normalizePlaceSelections(JSON.parse(to.query.placeSelections.toString()))
+      : []
+    const placeSelections = storePlaceSelections.length > 0 ? storePlaceSelections : queryPlaceSelections
+    const offerRequest: any = {
+      offerId: to.query.offerId.toString(),
+      afterSaleByRetailerOnly: null,
+      passengerRefs: passengers.map((p) => p.externalRef),
+      optionalAncillarySelections: ancillaryIds.map((aID: string) => ({
+        ancillaryId: aID,
+        passengerRefs: passengers.map((p) => p.externalRef),
+      })),
+    }
+
+    if (placeSelections.length > 0) {
+      offerRequest.placeSelections = placeSelections
+    }
+
     const bookingRequest = {
-      offers: [
-        {
-          offerId: to.query.offerId.toString(),
-          afterSaleByRetailerOnly: null,
-          passengerRefs: passengers.map((p) => p.externalRef),
-          optionalAncillarySelections: ancillaryIds.map((aID: string) => ({
-            ancillaryId: aID,
-            passengerRefs: passengers.map((p) => p.externalRef),
-          })),
-        },
-      ],
+      offers: [offerRequest],
       passengerSpecifications: passengers,
       purchaser: {
         detail: passengers[0].detail ?? {firstName: '', lastName: ''},
