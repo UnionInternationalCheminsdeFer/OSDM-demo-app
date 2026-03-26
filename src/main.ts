@@ -10,7 +10,10 @@ import { OSDM } from './api/main'
 import { AuthMiddleware } from './auth'
 import { JSONMimeTypeMiddleware } from './mime'
 
-const osdm = new OSDM(localStorage.getItem("sandboxURL") ?? "https://osdm.io/not-a-sandbox", import.meta.env.VITE_REQUESTOR_HEADER)
+const osdm = new OSDM(
+  localStorage.getItem('sandboxURL') ?? 'https://osdm.io/not-a-sandbox',
+  localStorage.getItem('requestorRef') ?? 'not-a-requestor',
+)
 
 osdm.use(AuthMiddleware)
 osdm.use(JSONMimeTypeMiddleware)
