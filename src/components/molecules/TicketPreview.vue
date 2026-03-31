@@ -1,6 +1,5 @@
 <template>
   <div class="h-full bg-osdm-bg-secondary mt-1 flex flex-col items-center p-4 gap-4">
-
     <sbb-card v-if="booking" class="max-w-[500px] w-1/2">
       <h1 class="text-2xl font-bold mb-4">Overview</h1>
 
@@ -10,7 +9,11 @@
 
       <div class="mb-4">
         <h3 class="text-lg font-semibold">Passenger Details</h3>
-        <div class="list-disc pl-5" v-for="passenger in booking.passengers" :key="`pas-${passenger.id}`">
+        <div
+          class="list-disc pl-5"
+          v-for="passenger in booking.passengers"
+          :key="`pas-${passenger.id}`"
+        >
           <ul v-if="passenger.detail">
             <li>{{ passenger.detail.firstName }} {{ passenger.detail.lastName }}</li>
             <li v-if="passenger.detail.email">Email: {{ passenger.detail.email }}</li>
@@ -18,7 +21,6 @@
             <li v-if="passenger.age">Age: {{ passenger.age }}</li>
           </ul>
         </div>
-
       </div>
 
       <div class="mb-4" v-if="booking.confirmedPrice">
@@ -27,27 +29,58 @@
           {{ displayPrice(booking.confirmedPrice) }}
         </p>
       </div>
+
+      <div class="flex gap-3 mt-4">
+        <button
+          type="button"
+          class="px-4 py-2 rounded bg-red-600 text-white disabled:opacity-50"
+          :disabled="cleanupLoading || !booking?.id"
+          @click="cleanupBooking"
+        >
+          {{ cleanupLoading ? 'Cleaning up...' : 'Cleanup booking' }}
+        </button>
+      </div>
     </sbb-card>
-    <sbb-card class="max-w-[500px] w-1/2" v-for="fulfillment in booking?.fulfillments" :key="`ful-${fulfillment.id}`">
+    <sbb-card
+      class="max-w-[500px] w-1/2"
+      v-for="fulfillment in booking?.fulfillments"
+      :key="`ful-${fulfillment.id}`"
+    >
       <div>
         <span>Control Number: {{ fulfillment.controlNumber }}</span>
 
-        <div v-for="(fulfillmentDocument, index) in fulfillment.fulfillmentDocuments"
-          :key="`ful-doc-${fulfillment.id}-${index}`" class="flex flex-col">
-          <a v-if="fulfillmentDocument.downloadLink" :href="fulfillmentDocument.downloadLink" target="_blank"
-            class="text-blue-500 hover:underline">Download Ticket</a>
-          <img v-if="fulfillmentDocument.downloadLink?.endsWith('.png')" :src="fulfillmentDocument.downloadLink"
-            class="self-center m-4" />
-          <sbb-loading-indicator v-else-if="fulfillment.status == 'ON_HOLD'" variant="circle" size="s" color="white"
-            class="self-center m-4"></sbb-loading-indicator>
+        <div
+          v-for="(fulfillmentDocument, index) in fulfillment.fulfillmentDocuments"
+          :key="`ful-doc-${fulfillment.id}-${index}`"
+          class="flex flex-col"
+        >
+          <a
+            v-if="fulfillmentDocument.downloadLink"
+            :href="fulfillmentDocument.downloadLink"
+            target="_blank"
+            class="text-blue-500 hover:underline"
+            >Download Ticket</a
+          >
+          <img
+            v-if="fulfillmentDocument.downloadLink?.endsWith('.png')"
+            :src="fulfillmentDocument.downloadLink"
+            class="self-center m-4"
+          />
+          <sbb-loading-indicator
+            v-else-if="fulfillment.status == 'ON_HOLD'"
+            variant="circle"
+            size="s"
+            color="white"
+            class="self-center m-4"
+          ></sbb-loading-indicator>
         </div>
-
       </div>
     </sbb-card>
     <RouterLink
+      v-if="booking?.id"
       :to="{
         name: 'refund-offers',
-        params: { bookingId: booking.id }
+        params: { bookingId: booking.id },
       }"
     >
       Request Refund
@@ -56,8 +89,10 @@
 </template>
 
 <script lang="ts">
-import { displayPrice } from '@/helpers/price';
+import { inject, ref } from 'vue'
+import { displayPrice } from '@/helpers/price'
 import { useBookingStore } from '@/stores/booking'
+import { osdmClientKey } from '@/types/symbols'
 import { SbbCardElement as SbbCard } from '@sbb-esta/lyne-elements/card'
 
 export default {
@@ -68,7 +103,26 @@ export default {
     },
   },
   setup() {
-    return { displayPrice }
+    const OSDM = inject(osdmClientKey)
+    const cleanupLoading = ref(false)
+
+    const cleanupBooking = async () => {
+      const bookingId = useBookingStore().booking?.id
+      if (!bookingId || cleanupLoading.value) {
+        return
+      }
+
+      cleanupLoading.value = true
+      try {
+        await OSDM?.booking.cleanupBooking(bookingId, { overruleCode: '' })
+      } catch (error) {
+        console.error('Cleanup booking failed', error)
+      } finally {
+        cleanupLoading.value = false
+      }
+    }
+
+    return { cleanupBooking, cleanupLoading, displayPrice }
   },
 }
 </script>

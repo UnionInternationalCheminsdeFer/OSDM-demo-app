@@ -70,6 +70,25 @@ export class OSDMBooking {
     })
   }
 
+
+  cleanupBooking(
+    bookingId: string,
+    request: { overruleCode: string },
+  ) {
+    return this.client?.POST('/bookings/{bookingId}/cleanup', {
+      params: {
+        header: {
+          Requestor: this.requestor,
+          'Content-Type': 'application/json',
+        },
+        path: {
+          bookingId,
+        },
+      },
+      body: request,
+    })
+  }
+
   requestRefundOffers(
     bookingId: string,
     request: components['schemas']['RefundOfferRequest'],
