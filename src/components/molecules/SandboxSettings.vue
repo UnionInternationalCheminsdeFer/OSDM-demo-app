@@ -55,6 +55,11 @@
             <input placeholder="x-reservation" name="message" v-model="requestorRef" />
           </sbb-form-field>
 
+          <label class="flex items-center gap-2 md:w-96">
+            <input type="checkbox" v-model="requestReservationOfferParts" />
+            <span>Request reservation offer parts</span>
+          </label>
+
           <sbb-button type="submit" size="m" sbb-overlay-close="" @click="handleSubmit">
             Set Auth details
           </sbb-button>
@@ -82,6 +87,7 @@ export default {
       clientSecret: '',
       authURL: '',
       requestorRef: '',
+      requestReservationOfferParts: false,
     }
   },
   setup() {
@@ -97,6 +103,7 @@ export default {
       this.clientSecret = useAuthStore().clientSecret
       this.authURL = useAuthStore().authURL
       this.requestorRef = useAuthStore().requestorRef
+      this.requestReservationOfferParts = useAuthStore().requestReservationOfferParts
     }
   },
   methods: {
@@ -111,6 +118,7 @@ export default {
         this.clientSecret,
         this.authURL,
         this.requestorRef,
+        this.requestReservationOfferParts,
       )
       this.OSDM?.setEndpoint(this.serverURL)
     },
