@@ -16,6 +16,7 @@ export const usePassengerStore = defineStore('passenger', {
         id: '',
         externalRef: 'passenger_01',
         dateOfBirth: convertDateToOsdmDate(dummyBirthdate),
+        age: null,
         type: 'PERSON',
       },
     ],

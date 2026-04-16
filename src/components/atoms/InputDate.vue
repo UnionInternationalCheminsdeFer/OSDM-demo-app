@@ -17,7 +17,10 @@ import {
 export default {
   props: {
     name: String,
-    value: Date,
+    value: {
+      type: Date,
+      default: null,
+    },
     size: {
       type: String,
       default: ''
