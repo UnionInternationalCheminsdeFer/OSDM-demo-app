@@ -12,6 +12,7 @@ import { inject } from 'vue'
 import { osdmClientKey } from '@/types/symbols'
 import { BookingError, useBookingStore } from '@/stores/booking'
 import { OfferListError, useOfferStore } from '@/stores/offers'
+import { useAuthStore } from '@/stores/auth'
 import { convertDateToOsdmDateTime, convertPassengerToAnonymousPassengerSpecification, convertPlaceToRef } from '@/helpers/conversions'
 
 const router = createRouter({
@@ -56,21 +57,20 @@ const router = createRouter({
   ],
 })
 
-
 // ToDo: Move all async logic into views
 const handleTripCollection = async (to: RouteLocationNormalizedGeneric) => {
   if (to.query.o && to.query.d && to.query.t&& to.query.v && to.query.tr) {
     const OSDM = inject(osdmClientKey)
 
-    const origin = JSON.parse(decodeURIComponent(atob(to.query.o.toString())));
-    const destination = JSON.parse(decodeURIComponent(atob(to.query.d.toString())));
-    const vias = JSON.parse(decodeURIComponent(atob(to.query.v.toString())));
+    const origin = JSON.parse(decodeURIComponent(atob(to.query.o.toString())))
+    const destination = JSON.parse(decodeURIComponent(atob(to.query.d.toString())))
+    const vias = JSON.parse(decodeURIComponent(atob(to.query.v.toString())))
     const date = new Date(to.query.t.toString())
     const dateReferenceType = !!JSON.parse(to.query.tr.toString()) ? DateReferenceType.DEPARTURE : DateReferenceType.ARRIVAL
 
-    const viasRef = vias.map((v: SearchCriteriaLocation) => ({viaPlace: convertPlaceToRef(v)}));
-    const viasRequest = viasRef.length > 0 ? viasRef : undefined;
-    const tripSearchCriteriaEmbeds: ['TRIPS'] = ['TRIPS'];
+    const viasRef = vias.map((v: SearchCriteriaLocation) => ({ viaPlace: convertPlaceToRef(v) }))
+    const viasRequest = viasRef.length > 0 ? viasRef : undefined
+    const tripSearchCriteriaEmbeds: ['TRIPS'] = ['TRIPS']
 
     const request = {
       origin: convertPlaceToRef(origin),
@@ -82,7 +82,7 @@ const handleTripCollection = async (to: RouteLocationNormalizedGeneric) => {
     }
 
     useTripsStore().setLoading(true)
-    const response = await OSDM?.trip.searchTrips(request);
+    const response = await OSDM?.trip.searchTrips(request)
 
     if (response?.data?.trips) {
       useTripsStore().setTrips(response.data.trips)
@@ -114,11 +114,13 @@ const handleOfferSearch = async (to: RouteLocationNormalizedGeneric) => {
   if (to.query.trip || to.query.tripSpec) {
     const OSDM = inject(osdmClientKey)
     const passengers = usePassengerStore().passengers
+    const authStore = useAuthStore()
 
     const baseRequest: any = {
       anonymousPassengerSpecifications: passengers.map((p) =>
         convertPassengerToAnonymousPassengerSpecification(p),
       ),
+      offerSearchCriteria: {},
     }
 
     // TripSpecification
@@ -129,6 +131,14 @@ const handleOfferSearch = async (to: RouteLocationNormalizedGeneric) => {
       // tripIds
       const trip = JSON.parse(decodeURIComponent(atob(to.query.trip!.toString())))
       baseRequest.tripIds = [trip.id]
+    }
+
+    if (authStore.requestReservationOfferParts) {
+      baseRequest.offerSearchCriteria.requestedOfferParts = ['RESERVATION']
+    }
+
+    if (Object.keys(baseRequest.offerSearchCriteria).length === 0) {
+      delete baseRequest.offerSearchCriteria
     }
 
     useOfferStore().setLoading(true)
@@ -191,7 +201,7 @@ const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
 
             return {
               reservationId,
-              tripLegCoverage: {tripId:'1',legId:'1'},
+              tripLegCoverage: { tripId: '1', legId: '1' },
               referencePlace: {
                 coachNumber,
                 placeNumber,
@@ -223,7 +233,7 @@ const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
 
           return {
             reservationId,
-            tripLegCoverage: {tripId:'1',legId:'1'},
+            tripLegCoverage: { tripId: '1', legId: '1' },
             places,
           }
         })
@@ -252,9 +262,9 @@ const handleBooking = async (to: RouteLocationNormalizedGeneric) => {
       offers: [offerRequest],
       passengerSpecifications: passengers,
       purchaser: {
-        detail: passengers[0].detail ?? {firstName: '', lastName: ''},
-      }
-    };
+        detail: passengers[0].detail ?? { firstName: '', lastName: '' },
+      },
+    }
 
     useBookingStore().setLoading(true)
 
@@ -298,14 +308,14 @@ const handleFulfillment = async (to: RouteLocationNormalizedGeneric) => {
         OSDM?.booking.updatePassengerInformation(
           p,
           p.id,
-          to.query.bookingId.toString()
+          to.query.bookingId.toString(),
         )
       }
     }))
 
     // Request booking fulfillment
     await OSDM?.booking.fulfillBooking(
-      to.query.bookingId.toString()
+      to.query.bookingId.toString(),
     )
   } else {
     // ToDo: Error handling + routing
