@@ -78,6 +78,7 @@ export const convertPassengerToAnonymousPassengerSpecification = (passenger: com
     externalRef: passenger.externalRef,
     type: passenger.type,
     dateOfBirth: passenger.dateOfBirth,
+    age: passenger.age,
 });
 
 export const convertTripToTripSpecification = (

@@ -31,8 +31,24 @@
                     </button>
                 </div>
 
-                <InputDate size="s" name="Birthday" :value="getBirthdate(passenger)"
-                    :select-callback="(selectedDate: Date) => updatePassenger(selectedDate, index)" />
+                <div class="flex flex-col gap-2">
+                    <InputDate size="s" name="Birthday" :value="getBirthdate(passenger)"
+                        :select-callback="(selectedDate: Date | null) => updatePassengerDate(selectedDate, index)" />
+
+                    <div class="flex gap-2 items-center">
+                        <InputNumber size="s" class="min-w-24" name="Age" :value="passenger.age"
+                            :min="0" :max="150"
+                            @input="(event: Event) => updatePassengerAge(event, index)" />
+
+                        <div class="flex flex-col">
+                            <label class="text-sm font-semibold">Type</label>
+                            <select class="border rounded px-2 py-1 text-sm" :value="passenger.type"
+                                @change="(event: Event) => updatePassengerType(event, index)">
+                                <option v-for="type in passengerTypes" :key="type" :value="type">{{ type }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -43,11 +59,13 @@ import type { components } from '@/schemas/schema';
 import { SbbIconElement as SbbIcon } from '@sbb-esta/lyne-elements/icon'
 import InputDate from '../atoms/InputDate.vue';
 import { convertDateToOsdmDate, convertOsdmDateToDate } from '@/helpers/conversions';
+import InputNumber from '../atoms/InputNumber.vue';
 
 export default {
     components: {
         SbbIcon,
         InputDate,
+        InputNumber,
     },
     props: {
         selectedPassengers: {
@@ -62,6 +80,7 @@ export default {
     data() {
         return {
             expanded: false,
+            passengerTypes: ['PERSON', 'DOG', 'BICYCLE', 'LUGGAGE'] as components['schemas']['PassengerType'][]
         }
     },
     methods: {
@@ -102,19 +121,32 @@ export default {
                 id: `passenger_0${this.selectedPassengers.length + 1}`,
                 externalRef: `passenger_0${this.selectedPassengers.length + 1}`,
                 dateOfBirth: convertDateToOsdmDate(this.getDummyDate()),
+                age: null,
                 type: 'PERSON',
             }])
         },
-        updatePassenger(selectedDate: Date, index: number) {
+        updatePassengerDate(selectedDate: Date | null, index: number) {
             const updatedPassengers = [...this.selectedPassengers];
-            updatedPassengers[index].dateOfBirth = convertDateToOsdmDate(selectedDate);
+            updatedPassengers[index].dateOfBirth = selectedDate ? convertDateToOsdmDate(selectedDate) : null;
+            this.selectCallback(updatedPassengers)
+        },
+        updatePassengerAge(event: Event, index: number) {
+            const value = (event.target as HTMLInputElement).value;
+            const updatedPassengers = [...this.selectedPassengers];
+            updatedPassengers[index].age = value === '' ? null : Number(value);
+            this.selectCallback(updatedPassengers)
+        },
+        updatePassengerType(event: Event, index: number) {
+            const value = (event.target as HTMLSelectElement).value as components['schemas']['PassengerType'];
+            const updatedPassengers = [...this.selectedPassengers];
+            updatedPassengers[index].type = value;
             this.selectCallback(updatedPassengers)
         },
         getBirthdate(passenger: components['schemas']['Passenger']) {
             if (passenger.dateOfBirth) {
                 return convertOsdmDateToDate(passenger.dateOfBirth)
             }
-            return this.getDummyDate()
+            return null
         },
         removePassenger(index: number) {
             if (index > 0) {
