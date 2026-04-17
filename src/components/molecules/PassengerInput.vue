@@ -47,6 +47,14 @@
                                 <option v-for="type in passengerTypes" :key="type" :value="type">{{ type }}</option>
                             </select>
                         </div>
+
+                        <div class="flex flex-col">
+                            <label class="text-sm font-semibold">Reduction card</label>
+                            <select class="border rounded px-2 py-1 text-sm" :value="getReductionCardCode(passenger)"
+                                @change="(event: Event) => updatePassengerCard(event, index)">
+                                <option v-for="card in reductionCardOptions" :key="card.value" :value="card.value">{{ card.label }}</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,7 +88,12 @@ export default {
     data() {
         return {
             expanded: false,
-            passengerTypes: ['PERSON', 'DOG', 'BICYCLE', 'LUGGAGE'] as components['schemas']['PassengerType'][]
+            passengerTypes: ['PERSON', 'DOG', 'BICYCLE', 'LUGGAGE'] as components['schemas']['PassengerType'][],
+            reductionCardOptions: [
+                { label: '', value: '' },
+                { label: 'UIC_EURAIL', value: 'UIC_EURAIL' },
+                { label: 'UIC_INTERRAIL', value: 'UIC_INTERRAIL' },
+            ] as { label: string, value: string }[],
         }
     },
     methods: {
@@ -123,6 +136,7 @@ export default {
                 dateOfBirth: convertDateToOsdmDate(this.getDummyDate()),
                 age: null,
                 type: 'PERSON',
+                cards: [],
             }])
         },
         updatePassengerDate(selectedDate: Date | null, index: number) {
@@ -147,6 +161,25 @@ export default {
                 return convertOsdmDateToDate(passenger.dateOfBirth)
             }
             return null
+        },
+        getReductionCardCode(passenger: components['schemas']['Passenger']) {
+            return passenger.cards?.find((c) => c.type === 'REDUCTION_CARD')?.code ?? null
+        },
+        updatePassengerCard(event: Event, index: number) {
+            const value = (event.target as HTMLSelectElement).value;
+            const code = value === '' || value === 'null' ? null : (value as 'UIC_EURAIL' | 'UIC_INTERRAIL');
+            const updatedPassengers = [...this.selectedPassengers];
+            const passenger = { ...updatedPassengers[index] };
+            passenger.cards = code
+                ? [{
+                    type: 'REDUCTION_CARD',
+                    code,
+                    number: passenger.cards?.[0]?.number ?? null,
+                    issuer: passenger.cards?.[0]?.issuer,
+                }]
+                : [];
+            updatedPassengers[index] = passenger as components['schemas']['Passenger'];
+            this.selectCallback(updatedPassengers)
         },
         removePassenger(index: number) {
             if (index > 0) {
