@@ -32,6 +32,19 @@
               <span>{{ f.id }}</span>
             </label>
 
+            <div class="flex flex-col gap-2 mt-2">
+              <label class="font-medium">Optional overrule code</label>
+              <select
+                v-model="selectedOverruleCode"
+                class="border rounded px-2 py-1"
+              >
+                <option value="">(none)</option>
+                <option v-for="code in overruleCodes" :key="code" :value="code">
+                  {{ code }}
+                </option>
+              </select>
+            </div>
+
             <sbb-button
               icon-name="chevron-right-small"
               size="m"
@@ -87,20 +100,40 @@
 <script lang="ts">
 import HeaderBar from '@/components/molecules/HeaderBar.vue'
 import { SbbLoadingIndicatorElement as SbbLoadingIndicator } from '@sbb-esta/lyne-elements/loading-indicator'
-import { inject } from 'vue'
+import { defineComponent } from 'vue'
 import { osdmClientKey } from '@/types/symbols'
 import { BookingError, useBookingStore } from '@/stores/booking'
+import type { components } from '@/schemas/schema'
 
-export default {
+export default defineComponent({
   components: { HeaderBar, SbbLoadingIndicator },
 
   data() {
     return {
       loading: false,
       status: '',
-      booking: null as any,
+      booking: null as components['schemas']['Booking'] | null,
       selectedFulfillmentIds: [] as string[],
-      refundOffers: [] as any[],
+      selectedOverruleCode: '' as string,
+      overruleCodes: [
+        'CONNECTION_BROKEN',
+        'DEATH',
+        'EQUIPMENT_FAILURE',
+        'PAYMENT_FAILURE',
+        'PRM_SUPPORT_UNAVAILABLE',
+        'SALES_STAFF_ERROR',
+        'STOP_NOT_SERVED',
+        'STRIKE',
+        'TECHNICAL_FAILURE',
+        'TICKET_NOT_USED',
+        'INABILITY_TO_TRAVEL',
+        'EXTERNAL_COMPENSATION',
+        'DISRUPTION',
+        'JOURNEY_OBSOLETE',
+        'CERTIFIED_MEDICAL_CONDITION',
+        'DELAY_COMPENSATION',
+      ],
+      refundOffers: [] as components['schemas']['RefundOffer'][],
       refundOffersLoaded: false,
       confirmedRefundOfferId: null as string | null,
     }
@@ -114,7 +147,7 @@ export default {
       const v = this.$route.params.bookingId
       return v ? v.toString() : null
     },
-    fulfillments(): any[] {
+    fulfillments(): components['schemas']['Fulfillment'][] {
       return this.booking?.fulfillments ?? []
     },
   },
@@ -154,13 +187,20 @@ export default {
         this.refundOffersLoaded = false
 
         const OSDM = this.OSDM
-        const res = await OSDM?.booking.requestRefundOffers(this.bookingId, {
+        const requestPayload: Partial<components['schemas']['RefundOfferRequest']> = {
           fulfillmentIds: this.selectedFulfillmentIds,
-        })
+        }
+
+        if (this.selectedOverruleCode) {
+          requestPayload.overruleCode = this.selectedOverruleCode
+        }
+
+        const res = await OSDM?.booking.requestRefundOffers(this.bookingId, requestPayload)
 
         this.refundOffers = res?.data?.refundOffers ?? []
         this.refundOffersLoaded = true
       } catch (e) {
+        console.error('Refund-offers request failed', e)
         useBookingStore().setError(
           new BookingError(
             'An error occurred',
@@ -200,5 +240,5 @@ export default {
       }
     },
   },
-}
+})
 </script>
