@@ -74,17 +74,35 @@ export const convertOsdmDateToDate = (osdmDate: string): Date => {
 }
 
 
-export const convertPassengerToAnonymousPassengerSpecification = (passenger: components['schemas']['Passenger']): components['schemas']['AnonymousPassengerSpecification'] => ({
-    externalRef: passenger.externalRef,
-    type: passenger.type,
-    dateOfBirth: passenger.dateOfBirth,
-    age: passenger.age,
-});
+const REDUCTION_CARD_CODES = ['UIC_EURAIL', 'UIC_INTERRAIL'] as const;
+
+export const convertPassengerToAnonymousPassengerSpecification = (passenger: components['schemas']['Passenger']): components['schemas']['AnonymousPassengerSpecification'] => {
+    const firstReductionCard = (passenger.cards ?? []).find((card) => card.type === 'REDUCTION_CARD');
+    const normalizedCode = REDUCTION_CARD_CODES.includes((firstReductionCard?.code ?? '') as any)
+        ? firstReductionCard?.code
+        : null;
+
+    return {
+        externalRef: passenger.externalRef,
+        type: passenger.type,
+        dateOfBirth: passenger.dateOfBirth,
+        age: passenger.age,
+        cards: normalizedCode
+            ? [{
+                type: 'REDUCTION_CARD',
+                code: normalizedCode,
+                number: firstReductionCard?.number ?? null,
+                issuer: firstReductionCard?.issuer,
+            }]
+            : [],
+    };
+};
 
 export const convertTripToTripSpecification = (
     trip: components['schemas']['Trip'],
 ): components['schemas']['TripSpecification'] => ({
     externalRef: (trip.externalRef ?? trip.id) as string,
+    isPartOfInternationalTrip: trip.isPartOfInternationalTrip ?? undefined,
     legs: (trip.legs ?? [])
         .filter((l) => !!l?.timedLeg)
         .map((l, idx) => ({
