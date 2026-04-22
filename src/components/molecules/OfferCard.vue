@@ -125,14 +125,7 @@
                       :value="section.placesByPassenger[passengerRef]?.coachNumber ?? ''"
                       class="border rounded px-2 py-1"
                       placeholder="2"
-                      @input="
-                        updatePassengerPlace(
-                          section,
-                          passengerRef,
-                          'coachNumber',
-                          $event.target.value,
-                        )
-                      "
+                      @input="updatePassengerPlace(section, passengerRef, 'coachNumber', $event.target.value)"
                     />
                   </label>
                   <label class="flex flex-col text-sm gap-1">
@@ -141,18 +134,61 @@
                       :value="section.placesByPassenger[passengerRef]?.placeNumber ?? ''"
                       class="border rounded px-2 py-1"
                       placeholder="17"
-                      @input="
-                        updatePassengerPlace(
-                          section,
-                          passengerRef,
-                          'placeNumber',
-                          $event.target.value,
-                        )
-                      "
+                      @input="updatePassengerPlace(section, passengerRef, 'placeNumber', $event.target.value)"
                     />
                   </label>
                 </div>
               </template>
+
+              <div class="border-t pt-3 flex flex-col gap-2">
+                <div class="text-sm font-medium">Accommodation preference</div>
+                <div class="flex flex-col md:flex-row gap-2">
+                  <select
+                    v-model="section.accommodationDraftKey"
+                    class="border rounded px-2 py-1 text-sm flex-1"
+                  >
+                    <option value="">-- select --</option>
+                    <option
+                      v-for="accommodation in accommodations"
+                      :key="`${section.reservationId}-${accommodation.value}`"
+                      :value="accommodation.value"
+                    >
+                      {{ accommodation.label }}
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    class="border rounded px-3 py-1 text-sm"
+                    @click="addAccommodation(section)"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                <div
+                  v-if="section.selectedAccommodationKeys.length > 0"
+                  class="flex flex-col gap-2"
+                >
+                  <div
+                    v-for="accommodationKey in section.selectedAccommodationKeys"
+                    :key="`${section.reservationId}-selected-${accommodationKey}`"
+                    class="flex items-center justify-between gap-2 border rounded px-2 py-1 text-sm"
+                  >
+                    <span>{{ getAccommodationLabel(accommodationKey) }}</span>
+                    <button
+                      type="button"
+                      class="border rounded px-2 py-0.5 text-xs"
+                      @click="removeAccommodation(section, accommodationKey)"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                <div class="text-xs opacity-70">
+                  Applies to the selected passengers above. You can add more than one preference.
+                </div>
+              </div>
             </div>
           </template>
         </div>
@@ -176,13 +212,22 @@
 import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 import type { components } from '@/schemas/schema'
 import { usePassengerStore } from '@/stores/passengers'
-import { useOfferStore, type SelectedPlaceSelection } from '@/stores/offers'
+import {
+  useOfferStore,
+  type SelectedAccommodation,
+  type SelectedPlaceSelection,
+} from '@/stores/offers'
 import { SbbCardElement as SbbCard } from '@sbb-esta/lyne-elements/card'
 import { SbbChipElement as SbbChip } from '@sbb-esta/lyne-elements/chip'
 
 type PassengerPlace = {
   coachNumber: string
   placeNumber: string
+}
+
+type AccommodationOption = {
+  value: string
+  label: string
 }
 
 type SeatSection = {
@@ -192,7 +237,56 @@ type SeatSection = {
   adjacent: boolean
   referencePlace: PassengerPlace
   placesByPassenger: Record<string, PassengerPlace>
+  accommodationDraftKey: string
+  selectedAccommodationKeys: string[]
 }
+
+const ACCOMMODATION_VALUES = [
+  'PLACE_OR_COMPARTMENT_LOCATION|MIDDLE_BED',
+  'PLACE_OR_COMPARTMENT_LOCATION|UPPER_BED',
+  'PLACE_OR_COMPARTMENT_LOCATION|UPPER_DECK',
+  'COMPARTMENT_TYPE|CARRE',
+  'COMPARTMENT_TYPE|CLUB_2',
+  'COMPLETE_COMPARTMENT|COMPLETE',
+  'COMPLETE_COMPARTMENT|CONFERENCE',
+  'PLACE_OR_COMPARTMENT_POSITION|EASY_ACCESS',
+  'PLACE_OR_COMPARTMENT_ALIGNMENT|FACE_2_FACE',
+  'PLACE_OR_COMPARTMENT_POSITION|FAMILY',
+  'PLACE_OR_COMPARTMENT_POSITION|SILENCE',
+  'PLACE_OR_COMPARTMENT_FEATURE|INCLUDING_MEAL',
+  'PLACE_OR_COMPARTMENT_FEATURE|INCLUDING_DRINK',
+  'COMPARTMENT_TYPE|KIOSQUE',
+  'PLACE_OR_COMPARTMENT_POSITION|NEAR_ANIMALS',
+  'PLACE_OR_COMPARTMENT_POSITION|NEAR_DINING',
+  'PLACE_OR_COMPARTMENT_FEATURE|PHONE',
+  'PLACE_OR_COMPARTMENT_FEATURE|POWER',
+  'COMPARTMENT_TYPE|SALON',
+  'PLACE_OR_COMPARTMENT_ALIGNMENT|SIDE_BY_SIDE',
+  'COMPARTMENT_TYPE|SOLO',
+  'SPECIAL_COMPARTMENT_TYPE|WITH_ANIMALS',
+  'PLACE_OR_COMPARTMENT_POSITION|WITH_SMALL_CHILDREN',
+  'SPECIAL_COMPARTMENT_TYPE|WITHOUT_ANIMALS',
+  'PLACE_OR_COMPARTMENT_LOCATION|MIDDLE_SEAT',
+  'PLACE_OR_COMPARTMENT_LOCATION|WINDOW_SEAT',
+  'COMPARTMENT_TYPE|CABIN8',
+  'COMPARTMENT_TYPE|CLUB',
+  'COMPARTMENT_TYPE|COMPARTMENT',
+  'COMPARTMENT_TYPE|DOUBLE_WC',
+  'COMPARTMENT_TYPE|DOUBLE_SWC',
+  'PLACE_OR_COMPARTMENT_POSITION|NEAR_BICYCLE_AREA',
+  'COMPARTMENT_TYPE|OPEN_SPACE',
+  'COMPARTMENT_TYPE|PANORAMA',
+  'SPECIAL_COMPARTMENT_TYPE|PRAM',
+  'COMPARTMENT_TYPE|SLEEPERETTE',
+  'PLACE_OR_COMPARTMENT_FEATURE|TABLE',
+  'PLACE_OR_COMPARTMENT_FEATURE|VIDEO',
+  'SPECIAL_COMPARTMENT_TYPE|WHEELCHAIR_AND_SEAT',
+  'SPECIAL_COMPARTMENT_TYPE|WHEELCHAIR_NO_SEAT',
+  'PLACE_OR_COMPARTMENT_ALIGNMENT|CONNECTING_DOOR',
+  'GENDER|LADIES',
+  'GENDER|MEN',
+  'GENDER|MIXED',
+] as const
 
 export default {
   components: {
@@ -220,6 +314,15 @@ export default {
     passengers() {
       return usePassengerStore().passengers
     },
+    accommodations(): AccommodationOption[] {
+      return ACCOMMODATION_VALUES.map((value) => ({
+        value,
+        label: value
+          .split('|')
+          .map((part) => this.normalizeText(part))
+          .join(' / '),
+      }))
+    },
   },
   created() {
     this.seatSections = this.getInitialSeatSections()
@@ -240,9 +343,7 @@ export default {
     getAccommodationTypeText(offer) {
       const type = offer?.offerSummary?.overallAccommodationType
       const subType = offer?.offerSummary?.overallAccommodationSubType
-
       const text = [type, subType].filter(Boolean).join(' ')
-
       return text ? `(${text})` : ''
     },
     getInitialSeatSections(): SeatSection[] {
@@ -268,71 +369,60 @@ export default {
           )
 
           return {
-            reservationId: reservationId?.toString?.() ?? `${reservationIndex}`,
+            reservationId,
             allowedPassengerRefs,
             selectedPassengerRefs: [],
             adjacent: false,
             referencePlace: { coachNumber: '', placeNumber: '' },
             placesByPassenger,
+            accommodationDraftKey: '',
+            selectedAccommodationKeys: [],
           }
         })
-        .filter(
-          (section: SeatSection) =>
-            !!section.reservationId && section.allowedPassengerRefs.length > 0,
-        )
+        .filter((section: SeatSection) => !!section.reservationId)
     },
-    getPassengerByRef(passengerRef: string) {
-      return this.passengers.find(
-        (passenger: any) => `${passenger.externalRef}` === `${passengerRef}`,
-      )
-    },
-    getPassengerLabel(passengerRef: string, index: number) {
-      const passenger = this.getPassengerByRef(passengerRef)
-      const detail = passenger?.detail
-      if (detail?.firstName || detail?.lastName) {
-        return `${detail?.firstName ?? ''} ${detail?.lastName ?? ''}`.trim()
-      }
-      return `Passenger ${index + 1} (${passengerRef})`
-    },
-    togglePassenger(section: SeatSection, passengerRef: string, checked: boolean) {
-      if (checked) {
-        if (!section.selectedPassengerRefs.includes(passengerRef)) {
-          section.selectedPassengerRefs = [...section.selectedPassengerRefs, passengerRef]
-        }
-        return
-      }
-
-      section.selectedPassengerRefs = section.selectedPassengerRefs.filter(
-        (ref) => ref !== passengerRef,
-      )
-      section.placesByPassenger[passengerRef] = { coachNumber: '', placeNumber: '' }
-    },
-    updatePassengerPlace(
-      section: SeatSection,
-      passengerRef: string,
-      field: 'coachNumber' | 'placeNumber',
-      value: string,
-    ) {
-      if (!section.placesByPassenger[passengerRef]) {
-        section.placesByPassenger[passengerRef] = { coachNumber: '', placeNumber: '' }
-      }
-      section.placesByPassenger[passengerRef][field] = value
-    },
-    buildPlaceSelections(): SelectedPlaceSelection[] {
+    getFilledPlaceSelections(): SelectedPlaceSelection[] {
       if (!this.enableSeatSelection) {
         return []
       }
+
       return this.seatSections
-        .map((section) => {
-          const selectedPassengerRefs = section.selectedPassengerRefs
-            .map((ref) => ref?.toString?.())
-            .filter((ref: string | undefined) => !!ref)
+        .map((section): SelectedPlaceSelection | null => {
+          const selectedPassengerRefs = section.selectedPassengerRefs.filter((passengerRef) =>
+            section.allowedPassengerRefs.includes(passengerRef),
+          )
+
+          const accommodations: SelectedAccommodation[] = selectedPassengerRefs.length > 0
+            ? section.selectedAccommodationKeys
+                .map((accommodationKey) => {
+                  const [accommodationType, accommodationSubType] = accommodationKey.split('|')
+                  if (!accommodationType || !accommodationSubType) {
+                    return null
+                  }
+                  return {
+                    passengerRefs: [...selectedPassengerRefs],
+                    accommodationType,
+                    accommodationSubType,
+                  }
+                })
+                .filter((accommodation): accommodation is SelectedAccommodation => !!accommodation)
+            : []
+
           if (section.adjacent) {
-            const coachNumber = section.referencePlace.coachNumber?.trim()
-            const placeNumber = section.referencePlace.placeNumber?.trim()
-            if (!coachNumber || !placeNumber) {
-              return null
+            const coachNumber = section.referencePlace.coachNumber?.trim() ?? ''
+            const placeNumber = section.referencePlace.placeNumber?.trim() ?? ''
+
+            if (!coachNumber || !placeNumber || selectedPassengerRefs.length === 0) {
+              if (accommodations.length === 0) {
+                return null
+              }
+
+              return {
+                reservationId: section.reservationId,
+                accommodations,
+              }
             }
+
             return {
               reservationId: section.reservationId,
               passengerRefs: selectedPassengerRefs,
@@ -340,21 +430,18 @@ export default {
                 coachNumber,
                 placeNumber,
               },
+              ...(accommodations.length > 0 ? { accommodations } : {}),
             }
           }
-          if (selectedPassengerRefs.length === 0) {
-            return null
-          }
+
           const places = selectedPassengerRefs
             .map((passengerRef) => {
               const place = section.placesByPassenger[passengerRef]
-              const coachNumber = place?.coachNumber?.trim()
-              const placeNumber = place?.placeNumber?.trim()
-
+              const coachNumber = place?.coachNumber?.trim() ?? ''
+              const placeNumber = place?.placeNumber?.trim() ?? ''
               if (!coachNumber || !placeNumber) {
                 return null
               }
-
               return {
                 coachNumber,
                 placeNumber,
@@ -363,23 +450,25 @@ export default {
             })
             .filter((place) => !!place)
 
-          if (places.length === 0) {
+          if (places.length === 0 && accommodations.length === 0) {
             return null
           }
 
           return {
             reservationId: section.reservationId,
-            places,
+            ...(places.length > 0 ? { places } : {}),
+            ...(accommodations.length > 0 ? { accommodations } : {}),
           }
         })
-        .filter((selection): selection is SelectedPlaceSelection => !!selection)
+        .filter((placeSelection): placeSelection is SelectedPlaceSelection => !!placeSelection)
     },
     handleSelect() {
-      const placeSelections = this.buildPlaceSelections()
+      const filledPlaceSelections = this.getFilledPlaceSelections()
+
       useOfferStore().setSelectOfferAncillariesAndPlaces(
         this.offer as components['schemas']['Offer'],
         this.addedAncillaries,
-        placeSelections,
+        filledPlaceSelections,
       )
 
       this.$router.push({
@@ -387,6 +476,7 @@ export default {
         query: {
           offerId: this.offer.offerId,
           ancillariesIds: JSON.stringify(this.addedAncillaries.map((aa) => aa.id)),
+          placeSelections: JSON.stringify(filledPlaceSelections),
           ...this.$route.query,
         },
       })
@@ -398,9 +488,65 @@ export default {
       }
       this.addedAncillaries.push(ancillary)
     },
+    togglePassenger(section: SeatSection, passengerRef: string, checked: boolean) {
+      if (checked) {
+        if (!section.selectedPassengerRefs.includes(passengerRef)) {
+          section.selectedPassengerRefs = [...section.selectedPassengerRefs, passengerRef]
+        }
+        return
+      }
+
+      section.selectedPassengerRefs = section.selectedPassengerRefs.filter((ref) => ref !== passengerRef)
+    },
+    updatePassengerPlace(
+      section: SeatSection,
+      passengerRef: string,
+      field: 'coachNumber' | 'placeNumber',
+      value: string,
+    ) {
+      section.placesByPassenger = {
+        ...section.placesByPassenger,
+        [passengerRef]: {
+          ...(section.placesByPassenger[passengerRef] ?? { coachNumber: '', placeNumber: '' }),
+          [field]: value,
+        },
+      }
+    },
+    addAccommodation(section: SeatSection) {
+      const value = section.accommodationDraftKey?.trim?.() ?? ''
+      if (!value) {
+        return
+      }
+      if (!section.selectedAccommodationKeys.includes(value)) {
+        section.selectedAccommodationKeys = [...section.selectedAccommodationKeys, value]
+      }
+      section.accommodationDraftKey = ''
+    },
+    removeAccommodation(section: SeatSection, accommodationKey: string) {
+      section.selectedAccommodationKeys = section.selectedAccommodationKeys.filter(
+        (value) => value !== accommodationKey,
+      )
+    },
+    getAccommodationLabel(accommodationKey: string) {
+      const option = this.accommodations.find((item) => item.value === accommodationKey)
+      return option?.label ?? accommodationKey
+    },
+    getPassengerLabel(passengerRef: string, fallbackIndex: number) {
+      const passenger = this.passengers.find((item: any) => `${item?.externalRef}` === `${passengerRef}`)
+      if (!passenger) {
+        return `Passenger ${fallbackIndex + 1}`
+      }
+
+      const fullName = [passenger?.detail?.firstName, passenger?.detail?.lastName]
+        .filter(Boolean)
+        .join(' ')
+
+      return fullName
+        ? `Passenger ${fallbackIndex + 1} - ${fullName}`
+        : `Passenger ${fallbackIndex + 1}`
+    },
     getOfferPartSummary(offerParts: components['schemas']['AbstractOfferPart'][]) {
-      const parts = offerParts ?? []
-      const productIds = parts.flatMap((op) => op.products.map((prod) => prod.productId))
+      const productIds = offerParts.flatMap((op) => op.products.map((prod) => prod.productId))
       return productIds?.map(
         (ap) =>
           this.offer.products?.find((prod: components['schemas']['Product']) => prod.id == ap)

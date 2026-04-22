@@ -13,11 +13,18 @@ export interface SelectedReferencePlace {
   placeNumber: string
 }
 
+export interface SelectedAccommodation {
+  passengerRefs: string[]
+  accommodationType: string
+  accommodationSubType: string
+}
+
 export interface SelectedPlaceSelection {
   reservationId: string
   places?: SelectedPlace[]
   passengerRefs?: string[]
   referencePlace?: SelectedReferencePlace
+  accommodations?: SelectedAccommodation[]
 }
 
 export class OfferListError {
