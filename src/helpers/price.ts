@@ -38,7 +38,7 @@ export const displayPrice = (
       }
       return p
     }, 0)
-  
+
   let priceInCurrency = totalPrice.toFixed(2)
   if (price.scale) {
     priceInCurrency = (totalPrice / Math.pow(10, price.scale)).toFixed(price.scale)
@@ -51,23 +51,50 @@ export const extractPriceFromOffer = (
   offer: components['schemas']['Offer'],
 ): components['schemas']['Price'] => {
   let amount = 0
-  if (offer.admissionOfferParts
-    && offer.admissionOfferParts.every((o) => offer.admissionOfferParts && o.price.currency === offer.admissionOfferParts[0].price.currency)
-    && offer.admissionOfferParts.every((o) => offer.admissionOfferParts && o.price.scale === offer.admissionOfferParts[0].price.scale)) {
-      amount += offer.admissionOfferParts?.reduce((acc, o) => o.price.amount + acc, 0);
+
+  const admission = offer.admissionOfferParts ?? []
+  const reservation = offer.reservationOfferParts ?? []
+
+  const basePart = admission[0] ?? reservation[0] ?? null
+
+  const baseCurrency = basePart?.price.currency ?? ''
+  const baseScale = basePart?.price.scale ?? 0
+
+  if (
+    offer.admissionOfferParts &&
+    offer.admissionOfferParts.every(
+      (o) =>
+        offer.admissionOfferParts &&
+        o.price.currency === offer.admissionOfferParts[0].price.currency,
+    ) &&
+    offer.admissionOfferParts.every(
+      (o) =>
+        offer.admissionOfferParts && o.price.scale === offer.admissionOfferParts[0].price.scale,
+    )
+  ) {
+    amount += offer.admissionOfferParts?.reduce((acc, o) => o.price.amount + acc, 0)
   }
 
-  if (offer.reservationOfferParts
-    && offer.reservationOfferParts.every((o) => offer.reservationOfferParts && o.price.currency === offer.reservationOfferParts[0].price.currency)
-    && offer.reservationOfferParts.every((o) => offer.reservationOfferParts && o.price.scale === offer.reservationOfferParts[0].price.scale)) {
-      amount += offer.reservationOfferParts?.reduce((acc, o) => o.price.amount + acc, 0);
+  if (
+    offer.reservationOfferParts &&
+    offer.reservationOfferParts.every(
+      (o) =>
+        offer.reservationOfferParts &&
+        o.price.currency === offer.reservationOfferParts[0].price.currency,
+    ) &&
+    offer.reservationOfferParts.every(
+      (o) =>
+        offer.reservationOfferParts && o.price.scale === offer.reservationOfferParts[0].price.scale,
+    )
+  ) {
+    amount += offer.reservationOfferParts?.reduce((acc, o) => o.price.amount + acc, 0)
   }
 
   // ancillaryOfferParts are ignored as they are suspected to be optional
 
   return {
     amount,
-    currency: offer.admissionOfferParts?.[0].price.currency ?? '',
-    scale: offer.admissionOfferParts?.[0].price.scale ?? 0,
+    currency: baseCurrency,
+    scale: baseScale,
   }
 }

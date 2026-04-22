@@ -3,7 +3,7 @@
     <div class="flex flex-col items-center gap-2">
       <div class="self-start mb-4">
         <p
-          v-for="(description, index) in getOfferPartSummary(offer.admissionOfferParts)"
+          v-for="(description, index) in getOfferPartSummary(getMainOfferParts(offer))"
           :key="`desc-offer-${offer.id}-${index}`"
           class="text-lg font-bold"
         >
@@ -31,7 +31,10 @@
         </sbb-chip>
       </div>
 
-      <hr class="w-full my-4" v-if="offer.ancillaryOfferParts && offer.ancillaryOfferParts.length > 0" />
+      <hr
+        class="w-full my-4"
+        v-if="offer.ancillaryOfferParts && offer.ancillaryOfferParts.length > 0"
+      />
       <div
         v-for="ancillaryOffer in offer.ancillaryOfferParts"
         :key="`desc-${ancillaryOffer.id}`"
@@ -122,7 +125,14 @@
                       :value="section.placesByPassenger[passengerRef]?.coachNumber ?? ''"
                       class="border rounded px-2 py-1"
                       placeholder="2"
-                      @input="updatePassengerPlace(section, passengerRef, 'coachNumber', $event.target.value)"
+                      @input="
+                        updatePassengerPlace(
+                          section,
+                          passengerRef,
+                          'coachNumber',
+                          $event.target.value,
+                        )
+                      "
                     />
                   </label>
                   <label class="flex flex-col text-sm gap-1">
@@ -131,7 +141,14 @@
                       :value="section.placesByPassenger[passengerRef]?.placeNumber ?? ''"
                       class="border rounded px-2 py-1"
                       placeholder="17"
-                      @input="updatePassengerPlace(section, passengerRef, 'placeNumber', $event.target.value)"
+                      @input="
+                        updatePassengerPlace(
+                          section,
+                          passengerRef,
+                          'placeNumber',
+                          $event.target.value,
+                        )
+                      "
                     />
                   </label>
                 </div>
@@ -159,10 +176,7 @@
 import { displayPrice, extractPriceFromOffer } from '@/helpers/price'
 import type { components } from '@/schemas/schema'
 import { usePassengerStore } from '@/stores/passengers'
-import {
-  useOfferStore,
-  type SelectedPlaceSelection,
-} from '@/stores/offers'
+import { useOfferStore, type SelectedPlaceSelection } from '@/stores/offers'
 import { SbbCardElement as SbbCard } from '@sbb-esta/lyne-elements/card'
 import { SbbChipElement as SbbChip } from '@sbb-esta/lyne-elements/chip'
 
@@ -214,6 +228,15 @@ export default {
     return { displayPrice, extractPriceFromOffer }
   },
   methods: {
+    getMainOfferParts(offer) {
+      if (offer.admissionOfferParts?.length) {
+        return offer.admissionOfferParts
+      }
+      if (offer.reservationOfferParts?.length) {
+        return offer.reservationOfferParts
+      }
+      return []
+    },
     getAccommodationTypeText(offer) {
       const type = offer?.offerSummary?.overallAccommodationType
       const subType = offer?.offerSummary?.overallAccommodationSubType
@@ -236,10 +259,13 @@ export default {
                 .filter((ref: string | undefined) => !!ref)
             : []
 
-          const placesByPassenger = allowedPassengerRefs.reduce((acc: Record<string, PassengerPlace>, passengerRef: string) => {
-            acc[passengerRef] = { coachNumber: '', placeNumber: '' }
-            return acc
-          }, {})
+          const placesByPassenger = allowedPassengerRefs.reduce(
+            (acc: Record<string, PassengerPlace>, passengerRef: string) => {
+              acc[passengerRef] = { coachNumber: '', placeNumber: '' }
+              return acc
+            },
+            {},
+          )
 
           return {
             reservationId: reservationId?.toString?.() ?? `${reservationIndex}`,
@@ -250,10 +276,15 @@ export default {
             placesByPassenger,
           }
         })
-        .filter((section: SeatSection) => !!section.reservationId && section.allowedPassengerRefs.length > 0)
+        .filter(
+          (section: SeatSection) =>
+            !!section.reservationId && section.allowedPassengerRefs.length > 0,
+        )
     },
     getPassengerByRef(passengerRef: string) {
-      return this.passengers.find((passenger: any) => `${passenger.externalRef}` === `${passengerRef}`)
+      return this.passengers.find(
+        (passenger: any) => `${passenger.externalRef}` === `${passengerRef}`,
+      )
     },
     getPassengerLabel(passengerRef: string, index: number) {
       const passenger = this.getPassengerByRef(passengerRef)
@@ -271,7 +302,9 @@ export default {
         return
       }
 
-      section.selectedPassengerRefs = section.selectedPassengerRefs.filter((ref) => ref !== passengerRef)
+      section.selectedPassengerRefs = section.selectedPassengerRefs.filter(
+        (ref) => ref !== passengerRef,
+      )
       section.placesByPassenger[passengerRef] = { coachNumber: '', placeNumber: '' }
     },
     updatePassengerPlace(
@@ -366,7 +399,8 @@ export default {
       this.addedAncillaries.push(ancillary)
     },
     getOfferPartSummary(offerParts: components['schemas']['AbstractOfferPart'][]) {
-      const productIds = offerParts.flatMap((op) => op.products.map((prod) => prod.productId))
+      const parts = offerParts ?? []
+      const productIds = parts.flatMap((op) => op.products.map((prod) => prod.productId))
       return productIds?.map(
         (ap) =>
           this.offer.products?.find((prod: components['schemas']['Product']) => prod.id == ap)
