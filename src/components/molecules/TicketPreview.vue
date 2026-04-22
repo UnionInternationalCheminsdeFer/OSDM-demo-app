@@ -78,12 +78,11 @@
     </sbb-card>
     <RouterLink
       v-if="booking?.id"
-      :to="{
-        name: 'refund-offers',
-        params: { bookingId: booking.id },
-      }"
+      :to="`/refund-offers/${booking.id}`"
+      custom
+      v-slot="{ navigate }"
     >
-      Request Refund
+      <sbb-button icon-name="chevron-right-small" @click="navigate"> Request refund </sbb-button>
     </RouterLink>
   </div>
 </template>
