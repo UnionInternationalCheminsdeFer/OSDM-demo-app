@@ -1,4 +1,3 @@
-<div id="top"></div>
 <!-- PROJECT SHIELDS -->
 <!--
 *** Using markdown "reference style" links for readability.
@@ -86,7 +85,7 @@ This is a short guide to setup your own development environment of the OSDM Demo
 1. To start of clone the Repo:
 
    ```sh
-   $ git clone git@github.com:UnionInternationalCheminsdeFer/OSDM.git
+   $ git clone git@github.com:UnionInternationalCheminsdeFer/OSDM-demo-app.git
    ```
 
 2. Install all dependencies of the Demp App:
